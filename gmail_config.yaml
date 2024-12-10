@@ -1,0 +1,9 @@
+email:
+  smtp_server: 'smtp.gmail.com'
+  smtp_port: 587
+  sender_email: 'ighost0321@gmail.com'
+  sender_password: 'huji iamv tltv rexn'
+  receiver_emails: ['waterwawa88@yahoo.com.tw','ighost0321@gmail.com']
+  # receiver_emails: ['ighost0321@gmail.com']
+  subject: '今日KD <= 30 & 潛力股報表'
+  body: 'FYI.'
