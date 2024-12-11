@@ -13,6 +13,9 @@ import emailService
 if __name__ == "__main__":
     log = logger.get_log("log_config.yaml")
     current_dir = f"{os.path.curdir}{os.sep}reports"
+    default_KD_limits = 30
+    default_days = 7
+
     # Check report directory exits or not
     if not current_dir or not os.path.isdir(current_dir):
         current_dir = f"{os.path.curdir}{os.sep}reports"
@@ -64,7 +67,7 @@ if __name__ == "__main__":
             #找到並列印 KD 值小於或等於設定的時間
             ###############################################################
             df_kd = kd.calculate_kd(value)
-            kd_under_level = kd.filter_data(df_kd, start_date, end_date)
+            kd_under_level = kd.filter_data_days(df_kd, days_in_advance=default_days, k_num=default_KD_limits, d_num=default_KD_limits)
             kd_under_level = kd_under_level[["id", "name", "industry", "Close", "K", "D", "Volume"]]
             total_kd_df = pd.concat(
                     [total_kd_df, kd_under_level]
