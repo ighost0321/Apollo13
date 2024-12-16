@@ -1,4 +1,5 @@
 """This service is for email"""
+import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -6,7 +7,6 @@ from email import encoders
 import smtplib
 import yaml
 import logger
-import os
 
 
 
@@ -63,9 +63,9 @@ def send_mail(log: any, config_file:str = 'gmail_config.yaml',attaches: list = [
         text = msg.as_string()
         server.sendmail(email_config['sender_email'], email_config['receiver_emails'], text)
         server.quit()
-        log.info(f"Email has sent to {email_config['receiver_emails']} successfully")
+        log.info("Email has sent to %s successfully", email_config['receiver_emails'])
     except IOError as e:
-        log.exception(f"Failed to send email. Error: {e}")
+        log.exception("Failed to send email. Error: %s", e)
 
 
 if __name__ == '__main__':
