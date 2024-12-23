@@ -166,3 +166,4 @@ kd20_*
 stars_*
 *.csv
 reports/
+docker/
