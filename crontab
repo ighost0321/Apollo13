@@ -1,2 +1,1 @@
-* * * * * echo "test" >> /var/log/script.log
-*/10 * * * * /usr/app/run.sh >> /var/log/cron.log
+0 20 * * 2,5 /usr/app/run.sh >> /var/log/cron.log
