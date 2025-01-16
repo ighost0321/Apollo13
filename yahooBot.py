@@ -4,7 +4,7 @@ import datetime
 import pandas as pd
 import yfinance
 import kd_tools as kd
-import potential_starts as ps
+import potential_stars as ps
 import logger
 import emailService
 
