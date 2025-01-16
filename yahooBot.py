@@ -67,7 +67,7 @@ if __name__ == "__main__":
             #找到並列印 KD 值小於或等於設定的時間
             ###############################################################
             df_kd = kd.calculate_kd(value)
-            kd_under_level = kd.filter_data_days(df_kd, days_in_advance=default_days, k_num=default_KD_limits, d_num=default_KD_limits)
+            kd_under_level = kd.filter_data_days(df_kd, days_in_advance=default_days, d_num=default_KD_limits)
             kd_under_level = kd_under_level[["id", "name", "industry", "Close", "K", "D", "Volume"]]
             total_kd_df = pd.concat(
                     [total_kd_df, kd_under_level]
