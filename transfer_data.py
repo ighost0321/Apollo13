@@ -97,14 +97,14 @@ if __name__ == "__main__":
     file_TW = "stock_TW.csv"
     file_TWO = "stock_TWO.csv"
     #上市
-    stock_list = transfer_data("twse_20240527.csv", save_file=file_TW,addtional_func=fn) # for Yahoo
+    stock_list = transfer_data("twse_20250131.csv", save_file=file_TW,addtional_func=fn) # for Yahoo
     #Confirm the numbers of transfered data in file. 
     if stock_list:
         print(f"numbers of stock_list: {len(stock_list)}")
     
     #再處裡上櫃股票，股票清單為.csm
     stock_TWO_list = transfer_data(
-        "tpex_20240527.csv",
+        "tpex_20250131.csv",
         save_file=file_TWO,
         extension=".TWO",
         addtional_func=fn

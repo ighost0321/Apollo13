@@ -1,0 +1,32 @@
+version: 1
+
+formatters:
+  simple:
+    format: "[%(levelname)s %(asctime)s %(name)s %(module)s:%(lineno)d]: %(message)s"
+  # extended:
+  #   format: "%(asctime)s [%(name)s] %(levelname)s %(module)s:%(lineno)d: %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+
+  file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    filename: csv.log
+    formatter: simple
+    encoding: utf8
+    maxBytes: 1024
+    backupCount: 10
+
+loggers:
+  dev:
+    handlers: [console, file_handler]
+    propagate: False
+  test:
+    handlers: [file_handler]
+    propagate: False
+root:
+  handlers: [file_handler]
