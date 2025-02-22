@@ -3,7 +3,7 @@ import datetime
 
 def calculate_kd(df):
     """This function is used to calculate KD for stock"""
-    if(not df.empty):
+    if not df.empty:
         low_min = df["Low"].rolling(window=9, min_periods=1).min()  # k9 D9
         high_max = df["High"].rolling(window=9, min_periods=1).max()  # k9 D9
         rsv = (df["Close"] - low_min) / (high_max - low_min) * 100
