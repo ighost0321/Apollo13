@@ -46,11 +46,15 @@ if __name__ == "__main__":
         tickers_dict = {company.split(',')[0]: company for company in companies} 
         tickers = list(tickers_dict.keys())
         df = yfinance.download(tickers, group_by="ticker", period="1mo")
-        # df = yfinance.download("2330.TW", group_by="ticker", period="1mo")
         d = {idx: gp.T for idx, gp in df.T.groupby(level=0)}
+
         
         for key, value in d.items():
-            value.columns = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+            if 'Adj Close' in value.columns.get_level_values(1):
+                value.columns = ["Open", "High", "Low", "Close", "Adj Close","Volume"]
+            else:  
+                value.columns = ["Open", "High", "Low", "Close", "Volume"]
+
             ################################################################
             #取得股票資訊
             ################################################################
