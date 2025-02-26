@@ -37,8 +37,7 @@ if __name__ == "__main__":
     except Exception as e:
         log.exception(e)
     else:
-        # 計算當前日期和一個月前的日期
-        # 下載股票數據
+        # 計算當前日期和一個月前的日期下載股票數據
         total_kd_df = None  # Store kd data
         total_stars_df = None  # Store potential stars data
         tickers_dict = {}
