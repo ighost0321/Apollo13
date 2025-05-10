@@ -70,6 +70,10 @@ if __name__ == "__main__":
             #找到並列印 KD 值小於或等於設定的時間
             ###############################################################
             df_kd = kd.calculate_kd(value)
+            if df_kd is None or df_kd.empty:
+                log.error("There is no data for %s",{ticker_id})
+                continue
+
             kd_under_level = kd.filter_data_days(df_kd, days_in_advance=default_days, d_num=default_KD_limits)
             kd_under_level = kd_under_level[["id", "name", "industry", "Close", "K", "D", "Volume"]]
             total_kd_df = pd.concat(
