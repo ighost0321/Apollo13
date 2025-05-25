@@ -167,3 +167,4 @@ stars_*
 *.csv
 reports/
 docker/
+*.json
