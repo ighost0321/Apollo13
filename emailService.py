@@ -10,14 +10,26 @@ import logger
 
 
 
-def send_mail(log: any, config_file:str = 'gmail_config.yaml',attaches: list = []) -> bool:
-
+def send_mail(log=None, config_file: str = 'gmail_config.yaml', attaches=None) -> bool:
+    """Send email with optional attachments.
+    
+    Args:
+        log: Logger instance (creates one if None)
+        config_file: Path to Gmail config YAML file
+        attaches: List of file paths to attach
+        
+    Returns:
+        bool: True if email sent successfully
+    """
+    if attaches is None:
+        attaches = []
+        
     if log is None:
-        log = logger.get_log('emailService_log_config.yaml')
+        log = logger.get_log('log_config.yaml')
 
     # 讀取YAML檔案
     try:
-        with open('gmail_config.yaml', 'r', encoding='utf8') as f:
+        with open(config_file, 'r', encoding='utf8') as f:
             config = yaml.safe_load(f)
             email_config = config['email']
     except FileNotFoundError as e:

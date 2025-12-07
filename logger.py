@@ -21,7 +21,7 @@ def get_log(yaml_file: str):
         except Exception as e:
             print(e)
         else:
-            log = logging.getLogger(' ')
+            log = logging.getLogger('apollo13')
             log.setLevel(logging.INFO)
     return log
 
