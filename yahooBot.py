@@ -136,10 +136,10 @@ class StockAnalyzer:
                 )
                 
                 if kd_result is not None and not kd_result.empty:
-                    batch_kd_df = pd.concat([batch_kd_df, kd_result], ignore_index=True)
+                    batch_kd_df = pd.concat([batch_kd_df, kd_result], ignore_index=False)
                 
                 if stars_result is not None and not stars_result.empty:
-                    batch_stars_df = pd.concat([batch_stars_df, stars_result], ignore_index=True)
+                    batch_stars_df = pd.concat([batch_stars_df, stars_result], ignore_index=False)
                     
             except Exception as e:
                 self.log.error("Error processing stock %s: %s", ticker_id, e)
@@ -255,10 +255,10 @@ class StockAnalyzer:
                 batch_kd_df, batch_stars_df = self.process_batch(batch, tickers_dict)
                 
                 if not batch_kd_df.empty:
-                    total_kd_df = pd.concat([total_kd_df, batch_kd_df], ignore_index=True)
+                    total_kd_df = pd.concat([total_kd_df, batch_kd_df], ignore_index=False)
                 
                 if not batch_stars_df.empty:
-                    total_stars_df = pd.concat([total_stars_df, batch_stars_df], ignore_index=True)
+                    total_stars_df = pd.concat([total_stars_df, batch_stars_df], ignore_index=False)
                 
                 # 批次間暫停，避免API限制
                 if i < len(ticker_batches) - 1:
