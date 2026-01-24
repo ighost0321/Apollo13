@@ -95,10 +95,32 @@ email:
 python yahooBot.py
 ```
 
+### Update TWSE/TPEX Listings
+```bash
+python update_listings.py
+```
+
+This writes new files to `data/` using today's date in the filename:
+- `twse_YYYYMMDD.csv`
+- `tpex_YYYYMMDD.csv`
+
 ### Cron Job (Linux/Mac)
 ```bash
 # Run daily at 2:00 PM
 0 14 * * * cd /path/to/Apollo13 && python yahooBot.py >> run.log 2>&1
+```
+
+### Schedule Update (Linux/Mac)
+```bash
+# Run weekdays at 8:30 AM
+30 8 * * 1-5 cd /path/to/Apollo13 && python update_listings.py >> run.log 2>&1
+```
+
+### Schedule Update (Windows Task Scheduler)
+```powershell
+# Run weekdays at 08:30
+schtasks /Create /SC WEEKLY /D MON,TUE,WED,THU,FRI /TN "Apollo13 Update Listings" `
+  /TR "C:\Path\To\Python\python.exe C:\Path\To\Apollo13\update_listings.py" /ST 08:30
 ```
 
 ### Docker
