@@ -1,8 +1,10 @@
 import csv
 import glob
 import json
+import logging
 import os
 import sys
+import time
 import urllib.request
 from datetime import date
 
@@ -10,22 +12,71 @@ from datetime import date
 TWSE_URL = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
 TPEX_URL = "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O"
 
+# 重試設定
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # 秒
 
-def _request_json(url):
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "Apollo13/1.0"},
+
+def _setup_logging():
+    """設定 logging，同時輸出到檔案和控制台"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    log_dir = os.path.join(base_dir, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    
+    log_file = os.path.join(log_dir, f"fetch_{date.today().strftime('%Y%m%d')}.log")
+    
+    # 設定 logging 格式
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        data = resp.read().decode("utf-8")
-    return json.loads(data)
+    return logging.getLogger(__name__)
 
 
-def _latest_header(pattern, fallback):
+def _request_json(url, logger, max_retries=MAX_RETRIES):
+    """發送 HTTP 請求並重試"""
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"請求 {url} (嘗試 {attempt}/{max_retries})")
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Apollo13/1.0"},
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = resp.read().decode("utf-8")
+            logger.info(f"成功從 {url} 獲取資料")
+            return json.loads(data)
+        except urllib.error.URLError as e:
+            logger.warning(f"網路錯誤 (嘗試 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                logger.info(f"等待 {RETRY_DELAY} 秒後重試...")
+                time.sleep(RETRY_DELAY)
+            else:
+                logger.error(f"達到最大重試次數，請求失敗: {url}")
+                raise
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON 解析錯誤: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"未預期的錯誤 (嘗試 {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                logger.info(f"等待 {RETRY_DELAY} 秒後重試...")
+                time.sleep(RETRY_DELAY)
+            else:
+                raise
+
+
+def _latest_header(pattern, fallback, logger):
     candidates = sorted(glob.glob(pattern))
     if not candidates:
+        logger.info(f"找不到現有的檔案 ({pattern})，使用預設 header")
         return fallback
     latest = candidates[-1]
+    logger.info(f"從現有檔案讀取 header: {latest}")
     with open(latest, "r", encoding="utf-8-sig", newline="") as f:
         return next(csv.reader(f))
 
@@ -123,20 +174,31 @@ def _build_headers():
 
 
 def main():
+    logger = _setup_logging()
+    logger.info("=" * 60)
+    logger.info("開始執行股票資料更新")
+    logger.info("=" * 60)
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(base_dir, "data")
     os.makedirs(data_dir, exist_ok=True)
+    logger.info(f"資料目錄: {data_dir}")
 
     header_keys, default_twse, default_tpex = _build_headers()
     twse_header = _latest_header(
-        os.path.join(data_dir, "twse_*.csv"), default_twse
+        os.path.join(data_dir, "twse_*.csv"), default_twse, logger
     )
     tpex_header = _latest_header(
-        os.path.join(data_dir, "tpex_*.csv"), default_tpex
+        os.path.join(data_dir, "tpex_*.csv"), default_tpex, logger
     )
 
-    twse_data = _request_json(TWSE_URL)
-    tpex_data = _request_json(TPEX_URL)
+    logger.info("開始下載 TWSE 資料...")
+    twse_data = _request_json(TWSE_URL, logger)
+    logger.info(f"TWSE 資料筆數: {len(twse_data)}")
+    
+    logger.info("開始下載 TPEX 資料...")
+    tpex_data = _request_json(TPEX_URL, logger)
+    logger.info(f"TPEX 資料筆數: {len(tpex_data)}")
 
     # Field mappings (API key names)
     twse_map = {
@@ -212,6 +274,7 @@ def main():
     twse_out = os.path.join(data_dir, "twse_%s.csv" % stamp)
     tpex_out = os.path.join(data_dir, "tpex_%s.csv" % stamp)
 
+    logger.info(f"開始寫入 TWSE CSV: {twse_out}")
     with open(twse_out, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(twse_header)
@@ -221,7 +284,9 @@ def main():
                 key = twse_map.get(col)
                 out.append(row.get(key, "") if key else "")
             writer.writerow(out)
+    logger.info(f"完成寫入 TWSE: {len(twse_data)} 筆資料")
 
+    logger.info(f"開始寫入 TPEX CSV: {tpex_out}")
     with open(tpex_out, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(tpex_header)
@@ -231,14 +296,16 @@ def main():
                 key = tpex_map.get(col)
                 out.append(row.get(key, "") if key else "")
             writer.writerow(out)
+    logger.info(f"完成寫入 TPEX: {len(tpex_data)} 筆資料")
 
-    print("Wrote:", twse_out, "rows", len(twse_data))
-    print("Wrote:", tpex_out, "rows", len(tpex_data))
+    logger.info("=" * 60)
+    logger.info("股票資料更新完成")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        print("Update failed:", exc)
+        logging.error(f"更新失敗: {exc}", exc_info=True)
         sys.exit(1)
