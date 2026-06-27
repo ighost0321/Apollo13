@@ -213,10 +213,10 @@ class StockAnalyzer:
             current_day_data = recent_data.iloc[1]
             
             if ps.is_potential_star(
-                prev_day_data, 
-                current_day_data, 
-                self.log, 
-                self.config.POTENTIAL_STAR_THRESHOLD
+                previous_day=prev_day_data,
+                current_day=current_day_data,
+                log=self.log,
+                multiple=self.config.POTENTIAL_STAR_THRESHOLD
             ):
                 return recent_data[["id", "name", "industry", "Close", "K", "D", "Volume"]]
             
