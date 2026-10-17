@@ -1,0 +1,7 @@
+# 機密檔案不打包進 image，執行時用 volume 掛載或 --env-file 傳入
+.env
+venv/
+.git/
+__pycache__/
+*.log
+*.log.*

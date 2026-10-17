@@ -23,7 +23,8 @@ Apollo13/
 ├── transfer_data.py         # Data transfer utilities
 ├── config.json              # Application configuration
 ├── log_config.yaml          # Logging configuration
-├── gmail_config.yaml        # Email configuration (sensitive)
+├── gmail_config.yaml        # Email configuration (no secrets)
+├── .env.example             # Template for Gmail credentials (copy to .env)
 ├── requirements             # Python dependencies
 ├── Dockerfile               # Docker container definition
 └── reports/                 # Generated CSV reports
@@ -55,11 +56,22 @@ pip install -r requirements
 ```
 
 4. **Configure Gmail (for email reports)**
-Edit `gmail_config.yaml`:
+
+Credentials are read from environment variables (or a `.env` file next to `emailService.py`), never from `gmail_config.yaml`:
+```bash
+cp .env.example .env   # then edit .env
+```
+```
+GMAIL_SENDER_EMAIL=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_app_password  # Use App Password for Gmail
+```
+`.env` is git-ignored and excluded from the Docker image by `.dockerignore`.
+
+Non-sensitive settings stay in `gmail_config.yaml`:
 ```yaml
 email:
-  sender_email: your_email@gmail.com
-  sender_password: your_app_password  # Use App Password for Gmail
+  smtp_server: smtp.gmail.com
+  smtp_port: 587
   receiver_emails:
     - recipient@example.com
   subject: "Taiwan Stock KD Analysis Report"
@@ -126,7 +138,7 @@ schtasks /Create /SC WEEKLY /D MON,TUE,WED,THU,FRI /TN "Apollo13 Update Listings
 ### Docker
 ```bash
 docker build -t apollo13 .
-docker run -v $(pwd)/reports:/app/reports apollo13
+docker run -v $(pwd)/reports:/usr/app/reports -v $(pwd)/.env:/usr/app/.env:ro apollo13
 ```
 
 ## Technical Details
@@ -154,7 +166,7 @@ A stock is flagged as a "potential star" when:
 
 ### Email Not Sending
 - Verify Gmail app password (not regular password)
-- Check `gmail_config.yaml` file permissions
+- Check `GMAIL_SENDER_EMAIL` / `GMAIL_APP_PASSWORD` are set (env var or `.env`)
 - Review logs in `run.log`
 
 ### No Data Downloaded

@@ -8,6 +8,47 @@ import smtplib
 import yaml
 import logger
 
+# 敏感資訊（帳號密碼）一律由環境變數提供，不寫在 gmail_config.yaml 裡
+# 環境變數 -> email_config 欄位
+ENV_OVERRIDES = {
+    'GMAIL_SENDER_EMAIL': 'sender_email',
+    'GMAIL_APP_PASSWORD': 'sender_password',
+}
+
+DOTENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+
+
+def load_dotenv(path: str = DOTENV_PATH) -> None:
+    """Load KEY=VALUE lines from a .env file into os.environ (existing env vars win)."""
+    if not os.path.isfile(path):
+        return
+    with open(path, 'r', encoding='utf8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            key = key.strip()
+            if key.startswith('export '):
+                key = key[len('export '):].strip()
+            value = value.strip().strip('\'"')
+            os.environ.setdefault(key, value)
+
+
+def load_email_config(config_file: str) -> dict:
+    """Read non-sensitive settings from YAML, then fill credentials from env vars."""
+    with open(config_file, 'r', encoding='utf8') as f:
+        email_config = yaml.safe_load(f)['email']
+
+    load_dotenv()
+    for env_key, cfg_key in ENV_OVERRIDES.items():
+        if os.environ.get(env_key):
+            email_config[cfg_key] = os.environ[env_key]
+
+    missing = [env_key for env_key, cfg_key in ENV_OVERRIDES.items() if not email_config.get(cfg_key)]
+    if missing:
+        raise KeyError(f"Missing email credentials, please set: {', '.join(missing)} (env var or .env)")
+    return email_config
 
 
 def send_mail(log=None, config_file: str = 'gmail_config.yaml', attaches=None) -> bool:
@@ -27,13 +68,12 @@ def send_mail(log=None, config_file: str = 'gmail_config.yaml', attaches=None) -
     if log is None:
         log = logger.get_log('log_config.yaml')
 
-    # 讀取YAML檔案
+    # 讀取YAML檔案 + 環境變數中的帳密
     try:
-        with open(config_file, 'r', encoding='utf8') as f:
-            config = yaml.safe_load(f)
-            email_config = config['email']
-    except FileNotFoundError as e:
+        email_config = load_email_config(config_file)
+    except (FileNotFoundError, KeyError) as e:
         log.exception(e)
+        return False
 
     # 創建MIME多部件消息對象
     msg = MIMEMultipart()
@@ -76,8 +116,10 @@ def send_mail(log=None, config_file: str = 'gmail_config.yaml', attaches=None) -
         server.sendmail(email_config['sender_email'], email_config['receiver_emails'], text)
         server.quit()
         log.info("Email has sent to %s successfully", email_config['receiver_emails'])
+        return True
     except IOError as e:
         log.exception("Failed to send email. Error: %s", e)
+        return False
 
 
 if __name__ == '__main__':
